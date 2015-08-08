@@ -6,6 +6,7 @@ use self::sdl2::video::Window;
 use sdl2::EventPump;
 
 use ::input::{InputState, PressedState};
+use ::gfx::screen::Screen;
 
 pub struct System {
     pub sdl: Sdl,
@@ -31,7 +32,8 @@ impl System {
 pub struct Game {
     pub system: System,
     pub input_state: InputState,
-    pub running: bool
+    pub running: bool,
+    pub screen: Screen
 }
 
 impl Game {
@@ -39,7 +41,8 @@ impl Game {
         Ok(Game {
             system: try!(System::new("gbjam4")),
             input_state: InputState::new(),
-            running: true
+            running: true,
+            screen: Screen::new()
         })
     }
 
