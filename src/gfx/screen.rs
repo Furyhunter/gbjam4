@@ -12,7 +12,7 @@ pub struct Screen {
 
 impl Screen {
     pub fn new() -> Screen {
-        let image = Image::new(From::from((160, 144)));
+        let image = Image::new((160, 144), 0u8);
         let colors = [
             [0, 0, 0, 0],
             [0, 0, 0, 0],

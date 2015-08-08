@@ -1,5 +1,5 @@
 use std::ops::{Add, Sub};
-use std::convert::From;
+use std::convert::Into;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Size {
@@ -31,7 +31,7 @@ impl Size {
 
     pub fn buffer<T: Copy>(&self, initial: T) -> Vec<T> {
         let mut buffer = Vec::with_capacity(self.elements());
-        for i in 0..self.elements() {
+        for _ in 0..self.elements() {
             buffer.push(initial);
         }
 
@@ -43,8 +43,8 @@ impl Size {
     }
 }
 
-impl From<(u32, u32)> for Size {
-    fn from(pair: (u32, u32)) -> Size {
-        Size { width: pair.0, height: pair.1 }
+impl Into<Size> for (u32, u32) {
+    fn into(self) -> Size {
+        Size { width: self.0, height: self.1 }
     }
 }

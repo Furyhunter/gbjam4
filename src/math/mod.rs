@@ -1,9 +1,10 @@
 use std::ops::Add;
 use std::ops::Neg;
 use std::ops::Sub;
-use std::convert::From;
+use std::convert::Into;
 
 pub mod size;
+pub mod rect;
 
 #[derive(Copy, Clone)]
 pub struct Position {
@@ -41,11 +42,11 @@ impl Sub for Position {
     }
 }
 
-impl From<Vector> for Position {
-    fn from(v: Vector) -> Position {
-        Position {
-            x: v.x.round() as i32,
-            y: v.y.round() as i32
+impl Into<Vector> for Position {
+    fn into(self) -> Vector {
+        Vector {
+            x: self.x as f32,
+            y: self.y as f32
         }
     }
 }
@@ -92,11 +93,11 @@ impl Sub for Vector {
     }
 }
 
-impl From<Position> for Vector {
-    fn from(v: Position) -> Vector {
-        Vector {
-            x: v.x as f32,
-            y: v.y as f32
+impl Into<Position> for Vector {
+    fn into(self) -> Position {
+        Position {
+            x: self.x.round() as i32,
+            y: self.y.round() as i32
         }
     }
 }

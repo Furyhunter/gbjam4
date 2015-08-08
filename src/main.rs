@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+
 #[macro_use] extern crate log;
 extern crate env_logger;
 extern crate sdl2;
@@ -19,6 +23,8 @@ fn main() {
     info!("Initialized");
 
     info!("Running");
-    game.run();
-    info!("Exiting");
+    match game.run() {
+        Ok(_) => info!("Exited successfully"),
+        Err(s) => error!("Exited abnormally: {}", s)
+    }
 }
