@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 
+#![feature(unboxed_closures)]
+
 #[macro_use] extern crate log;
 extern crate env_logger;
 extern crate sdl2;

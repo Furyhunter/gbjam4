@@ -1,5 +1,7 @@
 extern crate sdl2;
 
+pub mod entity;
+
 use self::sdl2::Sdl;
 use self::sdl2::VideoSubsystem;
 use sdl2::EventPump;
