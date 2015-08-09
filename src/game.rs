@@ -19,7 +19,7 @@ impl<'a> System<'a> {
     pub fn new(title: &str) -> Result<System<'a>, String> {
         let sdl = try!(sdl2::init());
         let video = try!(sdl.video());
-        let mut window_builder = video.window(title, 160, 144);
+        let mut window_builder = video.window(title, 640, 576);
         let window = try!(window_builder.position_centered().resizable().build());
         let renderer = try!(window.renderer().build());
 
@@ -59,7 +59,7 @@ impl<'a> Game<'a> {
             Err(s) => return Err(s)
         };
 
-        let mut im = Image::new((16, 16), 3u8);
+        let mut im = Image::new((16, 16), 1u8);
 
         // Set screen colors
         self.screen.colors[0] = [0, 0, 0, 255];
@@ -70,6 +70,8 @@ impl<'a> Game<'a> {
         //self.system.renderer.set_clip_rect()
 
         let mut render_texture: Texture = try!(self.system.renderer.create_texture_streaming(PixelFormatEnum::RGB888, (160, 144)));
+
+        try!(self.system.renderer.set_logical_size(160u32, 144u32));
 
         while self.running {
             self.input_state.update();
@@ -90,6 +92,7 @@ impl<'a> Game<'a> {
                 ()
             }).unwrap();
 
+            self.system.renderer.clear();
             self.system.renderer.copy(&render_texture, None, None);
             self.system.renderer.present();
         }
