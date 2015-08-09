@@ -59,12 +59,12 @@ impl<'a> Game<'a> {
             Err(s) => return Err(s)
         };
 
-        let mut im = Image::new((16, 16), 1u8);
+        let mut im = Image::new((16, 16), 3u8);
 
         // Set screen colors
         self.screen.colors[0] = [0, 0, 0, 255];
-        self.screen.colors[1] = [255, 255, 255, 255];
-        self.screen.colors[2] = [255, 255, 255, 255];
+        self.screen.colors[1] = [64, 64, 64, 255];
+        self.screen.colors[2] = [170, 170, 170, 255];
         self.screen.colors[3] = [255, 255, 255, 255];
 
         //self.system.renderer.set_clip_rect()
@@ -79,17 +79,18 @@ impl<'a> Game<'a> {
 
             im.blit_to(None::<Rect>, &mut self.screen.image, None);
 
-            // copy custom buffer to render texture
+            // copy custom screen buffer to render texture, mapping colors
             render_texture.with_lock(None, |buf, size| {
-                for (i, x) in buf.chunks_mut(3).enumerate() {
-                    let color = self.screen.image.buffer[(i * 3)] as usize;
-                    x[0] = self.screen.colors[color][0];
-                    x[1] = self.screen.colors[color][1];
-                    x[2] = self.screen.colors[color][2];
+                for (i, x) in self.screen.image.buffer.iter().enumerate() {
+                    let color = &self.screen.colors[*x as usize];
+                    buf[(i * 4) + 0] = color[0];
+                    buf[(i * 4) + 1] = color[1];
+                    buf[(i * 4) + 2] = color[2];
                 }
                 ()
             }).unwrap();
 
+            self.system.renderer.copy(&render_texture, None, None);
             self.system.renderer.present();
         }
 

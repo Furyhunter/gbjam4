@@ -28,17 +28,25 @@ impl Rect {
         let b_max_y = bounds.max_y();
         let b_min_y = bounds.y();
 
-        if self.x() > b_max_x || self.y() > b_max_y {
+        if self.x() >= b_max_x || self.y() >= b_max_y {
+            return Self::zero();
+        }
+        if self.max_x() < b_min_x || self.max_y() < b_min_y {
             return Self::zero();
         }
 
         let mut res = *self;
 
-        if self.x() > b_max_x || self.y() > b_max_y {
-            res.position.x = b_max_x;
+        if self.max_x() >= b_max_x {
+            let xclip = self.max_x() - b_max_x;
+            res.size.width -= xclip as u32;
+        }
+        if self.max_y() >= b_max_y {
+            let yclip = self.max_y() - b_max_y;
+            res.size.height -= yclip as u32;
         }
 
-        Self::zero()
+        res
     }
 
     #[inline]
