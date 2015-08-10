@@ -1,15 +1,19 @@
 extern crate sdl2;
 
-pub mod entity;
+pub mod world;
 
-use self::sdl2::Sdl;
-use self::sdl2::VideoSubsystem;
+use std::rc::Rc;
+use std::cell::RefCell;
+
 use sdl2::EventPump;
 use sdl2::render::Renderer;
+use sdl2::Sdl;
+use sdl2::VideoSubsystem;
 
 use ::input::{InputState, PressedState};
 use ::gfx::screen::Screen;
 use ::math::rect::Rect;
+use ::game::world::World;
 
 pub struct System<'a> {
     pub sdl: Sdl,
@@ -37,7 +41,8 @@ pub struct Game<'a> {
     pub system: System<'a>,
     pub input_state: InputState,
     pub running: bool,
-    pub screen: Screen
+    pub screen: Rc<RefCell<Screen>>,
+    pub world: Option<Rc<RefCell<World>>>
 }
 
 impl<'a> Game<'a> {
@@ -46,7 +51,8 @@ impl<'a> Game<'a> {
             system: try!(System::new("gbjam4")),
             input_state: InputState::new(),
             running: true,
-            screen: Screen::new()
+            screen: Rc::new(RefCell::new(Screen::new())),
+            world: None
         })
     }
 
@@ -61,13 +67,10 @@ impl<'a> Game<'a> {
             Err(s) => return Err(s)
         };
 
-        let mut im = Image::new((16, 16), 1u8);
+        let im = Image::new((16, 16), 2u8);
 
         // Set screen colors
-        self.screen.colors[0] = [0, 0, 0, 255];
-        self.screen.colors[1] = [64, 64, 64, 255];
-        self.screen.colors[2] = [170, 170, 170, 255];
-        self.screen.colors[3] = [255, 255, 255, 255];
+        self.screen.borrow_mut().colors = ::gfx::palettes::default_colors();
 
         //self.system.renderer.set_clip_rect()
 
@@ -75,21 +78,53 @@ impl<'a> Game<'a> {
 
         try!(self.system.renderer.set_logical_size(160u32, 144u32));
 
+        // Create world
+        self.world = Some(Rc::new(RefCell::new(World::new())));
+
+        // Make an entity
+        if let Some(ref mut w) = self.world {
+            let mut world = w.borrow_mut();
+            let ent = world.create_entity();
+            world.set_position(ent, ::math::Vector::new(0.0, 0.0));
+            fn think(world: Rc<RefCell<World>>, entity: u32, input_state: InputState) {
+                info!("hi i am {}", entity);
+            }
+            let rc = Rc::new(think);
+
+            world.set_thinker(ent, rc.clone());
+        }
+
+        // Play. The. Game.
         while self.running {
+            use std::thread;
             self.input_state.update();
 
             self.handle_events(&mut event_pump);
+
+            // think
+            if let Some(ref mut w) = self.world {
+                let world = w.borrow();
+                for i in world.clone_entities().into_iter() {
+                    if let Some(thinker) = world.thinker(i) {
+                        thinker(w.clone(), i, self.input_state);
+                    }
+
+                }
+            }
+
             // draw
 
-            im.blit_to(None::<Rect>, &mut self.screen.image, None);
+            im.blit_to(None::<Rect>, &mut self.screen.borrow_mut().image, None);
 
             // copy custom screen buffer to render texture, mapping colors
             render_texture.with_lock(None, |buf, size| {
-                for (i, x) in self.screen.image.buffer.iter().enumerate() {
-                    let color = &self.screen.colors[*x as usize];
-                    buf[(i * 4) + 0] = color[0];
+                let screen_b = self.screen.borrow_mut();
+                for (i, x) in screen_b.image.buffer.iter().enumerate() {
+                    let color = &screen_b.colors[*x as usize];
+                    // It's BGR for some reason?
+                    buf[(i * 4) + 0] = color[2];
                     buf[(i * 4) + 1] = color[1];
-                    buf[(i * 4) + 2] = color[2];
+                    buf[(i * 4) + 2] = color[0];
                 }
                 ()
             }).unwrap();
@@ -97,6 +132,8 @@ impl<'a> Game<'a> {
             self.system.renderer.clear();
             self.system.renderer.copy(&render_texture, None, None);
             self.system.renderer.present();
+
+            thread::sleep_ms((1000 / 60) as u32);
         }
 
         Ok(())
