@@ -89,9 +89,13 @@ impl<'a> Game<'a> {
             fn think(world: Rc<RefCell<World>>, entity: u32, input_state: InputState) {
                 info!("hi i am {}", entity);
             }
-            let rc = Rc::new(think);
+            fn draw(screen: Rc<RefCell<Screen>>, entity: u32) {
+                info!("drawing {}", entity);
+            }
 
-            world.set_thinker(ent, rc.clone());
+            world.set_thinker(ent, Rc::new(think));
+            world.set_drawer(ent, Rc::new(draw));
+
         }
 
         // Play. The. Game.
@@ -101,19 +105,22 @@ impl<'a> Game<'a> {
 
             self.handle_events(&mut event_pump);
 
-            // think
+            // think and draw entities
             if let Some(ref mut w) = self.world {
-                let world = w.borrow();
-                for i in world.clone_entities().into_iter() {
-                    if let Some(thinker) = world.thinker(i) {
+                let entities_clone = w.borrow().clone_entities();
+                for i in entities_clone.into_iter() {
+                    if let Some(thinker) = w.borrow().thinker(i) {
                         thinker(w.clone(), i, self.input_state);
                     }
+                }
+                let entities_clone = w.borrow().clone_entities();
 
+                for i in entities_clone.into_iter() {
+                    if let Some(drawer) = w.borrow().drawer(i) {
+                        drawer(self.screen.clone(), i);
+                    }
                 }
             }
-
-            // draw
-
             im.blit_to(None::<Rect>, &mut self.screen.borrow_mut().image, None);
 
             // copy custom screen buffer to render texture, mapping colors

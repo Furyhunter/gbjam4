@@ -5,16 +5,19 @@ use std::cell::RefCell;
 
 use ::math::Vector;
 use ::input::InputState;
+use ::gfx::screen::Screen;
 
 type EntityID = u32;
 
 type Thinker = Fn(Rc<RefCell<World>>, EntityID, InputState) -> ();
+type Drawer = Fn(Rc<RefCell<Screen>>, EntityID) -> ();
 
 pub struct World {
     entities: HashSet<EntityID>,
     positions: HashMap<EntityID, Vector>,
     velocities: HashMap<EntityID, Vector>,
     thinkers: HashMap<EntityID, Rc<Thinker>>,
+    drawers: HashMap<EntityID, Rc<Drawer>>,
 
     entity_counter: EntityID
 }
@@ -44,6 +47,7 @@ impl World {
             positions: HashMap::new(),
             velocities: HashMap::new(),
             thinkers: HashMap::new(),
+            drawers: HashMap::new(),
 
             entity_counter: 0
         }
@@ -73,4 +77,5 @@ impl World {
     make_component_funcs!(position, set_position, Vector, positions);
     make_component_funcs!(velocity, set_velocity, Vector, velocities);
     make_component_funcs!(thinker, set_thinker, Rc<Thinker>, thinkers);
+    make_component_funcs!(drawer, set_drawer, Rc<Drawer>, drawers);
 }
