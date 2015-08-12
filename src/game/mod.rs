@@ -4,6 +4,7 @@ pub mod world;
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::path::PathBuf;
 
 use sdl2::EventPump;
 use sdl2::render::Renderer;
@@ -14,6 +15,7 @@ use ::input::{InputState, PressedState};
 use ::gfx::screen::Screen;
 use ::math::rect::Rect;
 use ::game::world::World;
+use ::gfx::blit::Blit;
 
 pub struct System<'a> {
     pub sdl: Sdl,
@@ -67,7 +69,10 @@ impl<'a> Game<'a> {
             Err(s) => return Err(s)
         };
 
-        let im = Image::new((16, 16), 2u8);
+        let mut path_buf = PathBuf::new();
+        path_buf.push("assets");
+        path_buf.push("test-img.png");
+        let im = try!(::assets::load_image(path_buf));
 
         // Set screen colors
         self.screen.borrow_mut().colors = ::gfx::palettes::default_colors();
@@ -86,16 +91,7 @@ impl<'a> Game<'a> {
             let mut world = w.borrow_mut();
             let ent = world.create_entity();
             world.set_position(ent, ::math::Vector::new(0.0, 0.0));
-            fn think(world: Rc<RefCell<World>>, entity: u32, input_state: InputState) {
-                info!("hi i am {}", entity);
-            }
-            fn draw(screen: Rc<RefCell<Screen>>, entity: u32) {
-                info!("drawing {}", entity);
-            }
-
-            world.set_thinker(ent, Rc::new(think));
-            world.set_drawer(ent, Rc::new(draw));
-
+            world.set_sprite(ent, ::gfx::image::ImageDelegate::ImageBuf(Rc::new(im)));
         }
 
         // Play. The. Game.
@@ -117,11 +113,15 @@ impl<'a> Game<'a> {
 
                 for i in entities_clone.into_iter() {
                     if let Some(drawer) = w.borrow().drawer(i) {
-                        drawer(self.screen.clone(), i);
+                        drawer(w.clone(), self.screen.clone(), i);
+                    } else {
+                        // default drawer implementation
+                        if let Some(sprite) = w.borrow().sprite(i) {
+                            sprite.blit_to(None, &mut self.screen.borrow_mut().image, None);
+                        }
                     }
                 }
             }
-            im.blit_to(None::<Rect>, &mut self.screen.borrow_mut().image, None);
 
             // copy custom screen buffer to render texture, mapping colors
             render_texture.with_lock(None, |buf, size| {

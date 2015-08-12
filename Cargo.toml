@@ -7,3 +7,5 @@ authors = ["Ronald Kinard <furyhunter600@gmail.com>"]
 sdl2 = "*"
 log = "*"
 env_logger = "*"
+image = "*"
+find_folder = "*"

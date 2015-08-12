@@ -1,12 +1,45 @@
+use std::rc::Rc;
+use std::cell::RefCell;
+
 use ::math::size::Size;
 use ::math::rect::Rect;
-
 use ::math::Position;
+
+use ::gfx::blit::Blit;
+
+pub enum ImageDelegate {
+    ImageBuf(Rc<Image>),
+    ImageRef(SubImage)
+}
 
 /// Pixels are stored row first in the buffer.
 pub struct Image {
     pub buffer: Vec<u8>,
     size: Size
+}
+
+pub struct SubImage {
+    pub image: Rc<Image>,
+    rect: Rect
+}
+
+impl Clone for SubImage {
+    fn clone(&self) -> Self {
+        SubImage {
+            image: self.image.clone(),
+            rect: self.rect
+        }
+    }
+}
+
+impl Clone for ImageDelegate {
+    fn clone(&self) -> Self {
+        use self::ImageDelegate::*;
+        match *self {
+            ImageBuf(ref buf) => ImageBuf(buf.clone()),
+            ImageRef(ref sub) => ImageRef(sub.clone())
+        }
+    }
 }
 
 impl Image {
@@ -28,6 +61,16 @@ impl Image {
     }
 
     #[inline]
+    pub fn set_index(&mut self, index: usize, color: u8) -> Result<(), String> {
+        if let Some(p) = self.buffer.get_mut(index) {
+            *p = color;
+            Ok(())
+        } else {
+            Err("Invalid index".to_string())
+        }
+    }
+
+    #[inline]
     pub fn get_pixel(&self, position: (u32, u32)) -> Result<u8, String> {
         let i = try!(self.index_of_position(position));
 
@@ -41,9 +84,10 @@ impl Image {
         }
         Ok(position.1 * self.size.width + position.0)
     }
+}
 
-    pub fn blit_to<R>(&self, src: Option<R>, target: &mut Image, dst: Option<R>) -> ()
-        where R: Into<Rect> {
+impl Blit for Image {
+    fn blit_to(&self, src: Option<Rect>, target: &mut Image, dst: Option<Rect>) -> () {
 
         let src_rect: Rect = match src {
             Some(s) => s.into(),
@@ -68,11 +112,24 @@ impl Image {
                     Ok(c) => c,
                     Err(s) => panic!("This shouldn't happen: {}", s)
                 };
+                if color > 3 { continue; }
 
                 match target.set_pixel((ix as u32, iy as u32), color) {
                     Err(s) => panic!("This shouldn't happen: {}", s),
                     _ => ()
                 };
+            }
+        }
+    }
+}
+
+impl Blit for ImageDelegate {
+    fn blit_to(&self, src: Option<Rect>, target: &mut Image, dst: Option<Rect>) -> () {
+        match *self {
+            ImageDelegate::ImageBuf(ref i) => i.blit_to(src, target, dst),
+            ImageDelegate::ImageRef(ref i) => {
+                warn!("unimplemented, fall back to image blit");
+                i.image.blit_to(src, target, dst)
             }
         }
     }

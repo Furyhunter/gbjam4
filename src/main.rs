@@ -7,11 +7,14 @@
 #[macro_use] extern crate log;
 extern crate env_logger;
 extern crate sdl2;
+extern crate find_folder;
+extern crate image;
 
 mod game;
 mod input;
 mod math;
 mod gfx;
+mod assets;
 
 use game::Game;
 
