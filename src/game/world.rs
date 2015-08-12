@@ -8,10 +8,10 @@ use ::input::InputState;
 use ::gfx::screen::Screen;
 use ::gfx::image::ImageDelegate;
 
-type EntityID = u32;
+pub type EntityID = u32;
 
-type Thinker = Fn(Rc<RefCell<World>>, EntityID, InputState) -> ();
-type Drawer = Fn(Rc<RefCell<World>>, Rc<RefCell<Screen>>, EntityID) -> ();
+pub type Thinker = Fn(Rc<RefCell<World>>, EntityID, InputState) -> ();
+pub type Drawer = Fn(Rc<RefCell<World>>, Rc<RefCell<Screen>>, EntityID) -> ();
 
 pub struct World {
     entities: HashSet<EntityID>,

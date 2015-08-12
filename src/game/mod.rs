@@ -1,6 +1,7 @@
 extern crate sdl2;
 
 pub mod world;
+pub mod entitybuilder;
 
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -88,10 +89,17 @@ impl<'a> Game<'a> {
 
         // Make an entity
         if let Some(ref mut w) = self.world {
+            use std::ops::DerefMut;
+            use ::game::entitybuilder::EntityBuilder;
+            use ::math::Vector;
+            use ::gfx::image::ImageDelegate::*;
+
             let mut world = w.borrow_mut();
-            let ent = world.create_entity();
-            world.set_position(ent, ::math::Vector::new(0.0, 0.0));
-            world.set_sprite(ent, ::gfx::image::ImageDelegate::ImageBuf(Rc::new(im)));
+            let world_ref: &mut World = world.deref_mut();
+            let ent = EntityBuilder::new(world_ref)
+                .position(Vector::new(0.0, 0.0))
+                .sprite(ImageBuf(Rc::new(im)))
+                .finish();
         }
 
         // Play. The. Game.
